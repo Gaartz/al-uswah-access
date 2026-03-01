@@ -53,42 +53,39 @@ const defaultBranches = [
 ];
 
 // ── Role Permissions ──
+const _guruAccess = {
+  allowedPages: ['dashboard-home', 'profile', 'data-pegawai', 'scan-attendance', 'attendance-log', 'perizinan', 'pelanggaran', 'slip-gaji'],
+  allowedMenuIds: [4, 6, 7], canManage: false, canRekap: false, canManageUsers: false,
+  dashboardItems: [
+    { page: 'profile', icon: '👤', title: 'Profil', desc: 'Lihat & edit profil' },
+    { page: 'scan-attendance', icon: '📷', title: 'Scan Absensi', desc: 'Absen masuk & pulang' },
+    { page: 'attendance-log', icon: '📋', title: 'Log Absen', desc: 'Riwayat kehadiran' },
+    { page: 'perizinan', icon: '📨', title: 'Perizinan', desc: 'Ajukan izin & sakit' },
+    { page: 'pelanggaran', icon: '⚠️', title: 'Pelanggaran', desc: 'Status pelanggaran' },
+  ], dashboardMenuIds: [4, 6, 7]
+};
+const _adminAccess = {
+  allowedPages: ['dashboard-home', 'profile', 'data-pegawai', 'scan-attendance', 'attendance-log', 'perizinan', 'pelanggaran', 'manage-users', 'rekap-kehadiran', 'manual-attendance', 'slip-gaji', 'arsip-admin-umum', 'arsip-sarpras', 'arsip-kegiatan'],
+  allowedMenuIds: 'all', canManage: false, canRekap: true, canManageUsers: true, canManualAttendance: true,
+  dashboardItems: [
+    { page: 'profile', icon: '👤', title: 'Profil', desc: 'Lihat & edit profil' },
+    { page: 'scan-attendance', icon: '📷', title: 'Scan Absensi', desc: 'Absen masuk & pulang' },
+    { page: 'attendance-log', icon: '📋', title: 'Log Absen', desc: 'Riwayat kehadiran' },
+    { page: 'perizinan', icon: '📨', title: 'Perizinan', desc: 'Kelola perizinan' },
+    { page: 'pelanggaran', icon: '⚠️', title: 'Pelanggaran', desc: 'Kelola pelanggaran' },
+    { page: 'rekap-kehadiran', icon: '📊', title: 'Rekap Kehadiran', desc: 'Rekap lembaga Anda' },
+    { page: 'manual-attendance', icon: '📝', title: 'Absensi Manual', desc: 'Input izin, sakit, dll' },
+  ], dashboardMenuIds: 'all'
+};
+
 const rolePermissions = {
-  guru: {
-    label: 'Guru', allowedPages: ['dashboard-home', 'profile', 'data-pegawai', 'scan-attendance', 'attendance-log', 'perizinan', 'pelanggaran', 'slip-gaji'],
-    allowedMenuIds: [4, 6, 7], canManage: false, canRekap: false, canManageUsers: false,
-    dashboardItems: [
-      { page: 'profile', icon: '👤', title: 'Profil', desc: 'Lihat & edit profil' },
-      { page: 'scan-attendance', icon: '📷', title: 'Scan Absensi', desc: 'Absen masuk & pulang' },
-      { page: 'attendance-log', icon: '📋', title: 'Log Absen', desc: 'Riwayat kehadiran' },
-      { page: 'perizinan', icon: '📨', title: 'Perizinan', desc: 'Ajukan izin & sakit' },
-      { page: 'pelanggaran', icon: '⚠️', title: 'Pelanggaran', desc: 'Status pelanggaran' },
-    ], dashboardMenuIds: [4, 6, 7]
-  },
-  wali_kelas: {
-    label: 'Wali Kelas', allowedPages: ['dashboard-home', 'profile', 'data-pegawai', 'scan-attendance', 'attendance-log', 'perizinan', 'pelanggaran', 'slip-gaji'],
-    allowedMenuIds: [4, 6, 7], canManage: false, canRekap: false, canManageUsers: false,
-    dashboardItems: [
-      { page: 'profile', icon: '👤', title: 'Profil', desc: 'Lihat & edit profil' },
-      { page: 'scan-attendance', icon: '📷', title: 'Scan Absensi', desc: 'Absen masuk & pulang' },
-      { page: 'attendance-log', icon: '📋', title: 'Log Absen', desc: 'Riwayat kehadiran' },
-      { page: 'perizinan', icon: '📨', title: 'Perizinan', desc: 'Ajukan izin & sakit' },
-      { page: 'pelanggaran', icon: '⚠️', title: 'Pelanggaran', desc: 'Status pelanggaran' },
-    ], dashboardMenuIds: [4, 6, 7]
-  },
-  admin_cabang: {
-    label: 'Admin Lembaga', allowedPages: ['dashboard-home', 'profile', 'data-pegawai', 'scan-attendance', 'attendance-log', 'perizinan', 'pelanggaran', 'manage-users', 'rekap-kehadiran', 'manual-attendance', 'slip-gaji', 'arsip-admin-umum', 'arsip-sarpras', 'arsip-kegiatan'],
-    allowedMenuIds: 'all', canManage: false, canRekap: true, canManageUsers: true, canManualAttendance: true,
-    dashboardItems: [
-      { page: 'profile', icon: '👤', title: 'Profil', desc: 'Lihat & edit profil' },
-      { page: 'scan-attendance', icon: '📷', title: 'Scan Absensi', desc: 'Absen masuk & pulang' },
-      { page: 'attendance-log', icon: '📋', title: 'Log Absen', desc: 'Riwayat kehadiran' },
-      { page: 'perizinan', icon: '📨', title: 'Perizinan', desc: 'Kelola perizinan' },
-      { page: 'pelanggaran', icon: '⚠️', title: 'Pelanggaran', desc: 'Kelola pelanggaran' },
-      { page: 'rekap-kehadiran', icon: '📊', title: 'Rekap Kehadiran', desc: 'Rekap lembaga Anda' },
-      { page: 'manual-attendance', icon: '📝', title: 'Absensi Manual', desc: 'Input izin, sakit, dll' },
-    ], dashboardMenuIds: 'all'
-  },
+  guru: { label: 'Guru', ..._guruAccess },
+  staf: { label: 'Staf', ..._guruAccess },
+  wali_kelas: { label: 'Wali Kelas', ..._guruAccess },
+  admin_cabang: { label: 'Admin Lembaga', ..._adminAccess },
+  kepala_sekolah: { label: 'Kepala Sekolah', ..._adminAccess },
+  manajer: { label: 'Manajer', ..._adminAccess },
+  direktur: { label: 'Direktur', ..._adminAccess },
   super_admin: {
     label: 'Super Admin', allowedPages: ['dashboard-home', 'profile', 'data-pegawai', 'scan-attendance', 'attendance-log', 'perizinan', 'pelanggaran', 'manage-menu', 'manage-users', 'rekap-kehadiran', 'manage-qrcode', 'manual-attendance', 'slip-gaji', 'arsip-admin-umum', 'arsip-sarpras', 'arsip-kegiatan'],
     allowedMenuIds: 'all', canManage: true, canRekap: true, canManageUsers: true, canManualAttendance: true,
@@ -113,17 +110,26 @@ const menuCardConfig = [
 
 function getRoleLabel(role) { return rolePermissions[role]?.label || role; }
 function isSuperAdmin() { return currentUser?.role === 'super_admin'; }
-function isAdminCabang() { return currentUser?.role === 'admin_cabang'; }
+const adminLevelRoles = ['admin_cabang', 'kepala_sekolah', 'manajer', 'direktur'];
+function isAdminCabang() { return adminLevelRoles.includes(currentUser?.role); }
 function getRoleBadgeClass(role) {
   if (role === 'super_admin') return 'bg-red-100 text-red-700';
+  if (role === 'direktur') return 'bg-rose-100 text-rose-700';
+  if (role === 'manajer') return 'bg-amber-100 text-amber-700';
+  if (role === 'kepala_sekolah') return 'bg-orange-100 text-orange-700';
   if (role === 'admin_cabang') return 'bg-purple-100 text-purple-700';
   if (role === 'wali_kelas') return 'bg-blue-100 text-blue-700';
+  if (role === 'staf') return 'bg-cyan-100 text-cyan-700';
   return 'bg-teal-100 text-teal-700';
 }
 function getRoleSelectClass(role) {
   if (role === 'super_admin') return 'bg-red-50 border-red-200 text-red-700';
+  if (role === 'direktur') return 'bg-rose-50 border-rose-200 text-rose-700';
+  if (role === 'manajer') return 'bg-amber-50 border-amber-200 text-amber-700';
+  if (role === 'kepala_sekolah') return 'bg-orange-50 border-orange-200 text-orange-700';
   if (role === 'admin_cabang') return 'bg-purple-50 border-purple-200 text-purple-700';
   if (role === 'wali_kelas') return 'bg-blue-50 border-blue-200 text-blue-700';
+  if (role === 'staf') return 'bg-cyan-50 border-cyan-200 text-cyan-700';
   return 'bg-teal-50 border-teal-200 text-teal-700';
 }
 function generateSecret() { return 'AUSWH_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10); }
@@ -1791,7 +1797,7 @@ async function saveSubmenuLink(menuId, submenuId) {
 }
 
 // ── Admin: User Management (Firebase Auth) ──
-const roleOrder = { super_admin: 0, admin_cabang: 1, wali_kelas: 2, guru: 3 };
+const roleOrder = { super_admin: 0, direktur: 1, manajer: 2, kepala_sekolah: 3, admin_cabang: 4, wali_kelas: 5, guru: 6, staf: 7 };
 
 function populateBranchFilter() {
   const sel = document.getElementById('filterUserBranch');
@@ -1820,15 +1826,11 @@ async function loadAndRenderUserList() {
   const roleSelect = document.getElementById('newUserRole');
   const branchSelect = document.getElementById('newUserBranch');
   if (roleSelect) {
-    const acOption = roleSelect.querySelector('option[value="admin_cabang"]');
-    const saOption = roleSelect.querySelector('option[value="super_admin"]');
-    if (isAdminCabang()) {
-      if (acOption) acOption.style.display = 'none';
-      if (saOption) saOption.style.display = 'none';
-    } else {
-      if (acOption) acOption.style.display = '';
-      if (saOption) saOption.style.display = '';
-    }
+    const hiddenForAdmin = ['admin_cabang', 'kepala_sekolah', 'manajer', 'direktur', 'super_admin'];
+    hiddenForAdmin.forEach(r => {
+      const opt = roleSelect.querySelector(`option[value="${r}"]`);
+      if (opt) opt.style.display = isAdminCabang() ? 'none' : '';
+    });
   }
   if (branchSelect) {
     if (isAdminCabang() && currentUser.branch) {
@@ -1912,10 +1914,7 @@ function renderUserList() {
       <td data-label="Role" class="px-4 md:px-6 py-2 md:py-4">
         ${user.uid !== currentUser.uid ? `
         <select onchange="changeUserRole('${user.uid}', this.value)" class="px-3 py-1 text-xs font-medium rounded-full border ${getRoleSelectClass(user.role)} cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option value="guru" ${user.role === 'guru' ? 'selected' : ''}>Guru</option>
-          <option value="wali_kelas" ${user.role === 'wali_kelas' ? 'selected' : ''}>Wali Kelas</option>
-          ${isSuperAdmin() ? `<option value="admin_cabang" ${user.role === 'admin_cabang' ? 'selected' : ''}>Admin Lembaga</option>
-          <option value="super_admin" ${user.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>` : ''}
+          ${Object.keys(rolePermissions).filter(r => isSuperAdmin() || !['admin_cabang', 'kepala_sekolah', 'manajer', 'direktur', 'super_admin'].includes(r)).map(r => `<option value="${r}" ${user.role === r ? 'selected' : ''}>${getRoleLabel(r)}</option>`).join('')}
         </select>` : `<span class="px-3 py-1 text-xs font-medium rounded-full ${getRoleBadgeClass(user.role)}">${getRoleLabel(user.role)}</span>`}
       </td>
       <td data-label="Lembaga" class="px-4 md:px-6 py-2 md:py-4">
