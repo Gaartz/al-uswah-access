@@ -604,11 +604,14 @@ async function renderDataPegawai() {
   container.innerHTML = `<div class="text-center py-12"><div class="w-12 h-12 border-4 border-teal-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div><p class="text-gray-500">Memuat data pegawai...</p></div>`;
   try {
     const allUsers = await DB.getAllUsers();
+    // Exclude admin-level roles from pegawai list
+    const adminRoles = ['super_admin', 'admin_cabang', 'kepala_sekolah', 'manajer', 'direktur'];
+    const nonAdminUsers = allUsers.filter(u => !adminRoles.includes(u.role));
     // Filter by same branch as current user
     if (currentUser.branch) {
-      dataPegawaiList = allUsers.filter(u => u.branch === currentUser.branch);
+      dataPegawaiList = nonAdminUsers.filter(u => u.branch === currentUser.branch);
     } else {
-      dataPegawaiList = allUsers;
+      dataPegawaiList = nonAdminUsers;
     }
     if (dataPegawaiList.length === 0) {
       container.innerHTML = `<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
