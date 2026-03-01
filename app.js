@@ -1152,7 +1152,44 @@ async function onScanSuccess(decodedText) {
     return;
   }
 
-  // Process attendance
+  // ── Geolocation re-check at scan time ──
+  // If the branch has GPS coordinates, verify user is within radius NOW
+  if (branch.lat && branch.lng && branch.radius) {
+    if (!navigator.geolocation) {
+      showScanResult(false, 'Geolocation tidak didukung oleh browser Anda.');
+      return;
+    }
+
+    showScanResult(false, '<span class="text-blue-600">📍 Memverifikasi lokasi Anda...</span>');
+
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        });
+      });
+
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+      const distance = getDistance(userLat, userLng, branch.lat, branch.lng);
+
+      if (distance > branch.radius) {
+        showScanResult(false, `📍 Anda berada di luar area lembaga.<br>
+          <span class="text-sm text-gray-500">Jarak: ${distance}m (Batas maksimal: ${branch.radius}m)</span><br>
+          <span class="text-sm text-gray-500">Silakan mendekat ke area lembaga untuk absensi.</span>`);
+        return;
+      }
+      // User is within radius — proceed with attendance
+    } catch (geoError) {
+      console.error('[Geolocation] Scan-time verification error:', geoError);
+      showScanResult(false, '⚠️ Gagal memverifikasi lokasi. Pastikan GPS aktif dan izin lokasi diberikan.');
+      return;
+    }
+  }
+
+  // Process attendance (only reached if geolocation check passed or no geofence configured)
   await processAttendance(scanType, branch);
 }
 
