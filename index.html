@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="id" class="h-full">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Al Uswah Access</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- Firebase v9 Compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="h-full bg-gray-50">
+  <div id="app" class="h-full overflow-auto">
+
+    <!-- ==================== LOADING OVERLAY ==================== -->
+    <div id="loadingOverlay" class="min-h-full gradient-bg flex items-center justify-center p-4">
+      <div class="text-center">
+        <div class="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-white text-lg font-medium">Memuat...</p>
+      </div>
+    </div>
+
+    <!-- ==================== LOGIN PAGE ==================== -->
+    <div id="loginPage" class="hidden min-h-full gradient-bg flex items-center justify-center p-4">
+      <div class="glass-card rounded-3xl shadow-2xl p-8 md:p-12 w-full max-w-md page-transition">
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 mx-auto mb-4 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
+          <h1 id="loginTitle" class="text-3xl font-bold text-gray-800">Al Uswah Access</h1>
+          <p id="loginSubtitle" class="text-gray-500 mt-2">Sistem Akses Data Sekolah</p>
+        </div>
+        <div class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input type="email" id="loginEmail" placeholder="Masukkan email"
+              class="input-focus w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <div class="relative">
+              <input type="password" id="loginPassword" placeholder="Masukkan password"
+                class="input-focus w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 pr-12"
+                onkeydown="if(event.key==='Enter') handleLogin()">
+              <button type="button" onclick="togglePasswordVisibility()"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
+                <svg id="eyeIcon" class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+                  <path
+                    d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button onclick="handleLogin()" id="loginBtn"
+            class="btn-hover w-full gradient-bg text-white font-semibold py-3 rounded-xl shadow-lg">Masuk</button>
+          <p id="loginError" class="text-red-500 text-sm text-center hidden"></p>
+        </div>
+        <div class="mt-6 p-4 bg-gray-50 rounded-xl text-center">
+          <p class="text-xs text-gray-500 mb-2">Belum punya akun?</p>
+          <button onclick="showRegisterPage()"
+            class="text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">Buat Akun Baru →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== REGISTER PAGE ==================== -->
+    <div id="registerPage" class="hidden min-h-full gradient-bg flex items-center justify-center p-4">
+      <div class="glass-card rounded-3xl shadow-2xl p-8 md:p-10 w-full max-w-2xl register-transition">
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 mx-auto mb-4 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+          <h1 class="text-3xl font-bold text-gray-800">Buat Akun Baru</h1>
+          <p class="text-gray-500 mt-2">Lengkapi data untuk mengakses sistem</p>
+        </div>
+        <div class="space-y-6">
+          <!-- Bagian 1: Data Diri -->
+          <div>
+            <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+              <span class="w-7 h-7 gradient-bg rounded-lg flex items-center justify-center mr-2"><span
+                  class="text-xs">👤</span></span>Data Diri
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span
+                    class="text-red-400">*</span></label>
+                <input type="text" id="registerName" placeholder="Masukkan nama lengkap"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span
+                    class="text-red-400">*</span></label>
+                <select id="registerGender"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="">-- Pilih --</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tempat Lahir <span
+                    class="text-red-400">*</span></label>
+                <input type="text" id="registerBirthPlace" placeholder="Contoh: Jakarta"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span
+                    class="text-red-400">*</span></label>
+                <input type="date" id="registerBirthDate"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- Bagian 2: Alamat dan Kontak -->
+          <div>
+            <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+              <span class="w-7 h-7 gradient-bg rounded-lg flex items-center justify-center mr-2"><span
+                  class="text-xs">📍</span></span>Alamat dan Kontak
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email <span
+                    class="text-red-400">*</span></label>
+                <input type="email" id="registerEmail" placeholder="Masukkan email"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">No. WhatsApp <span
+                    class="text-red-400">*</span></label>
+                <input type="tel" id="registerWhatsapp" placeholder="08xxxxxxxxxx"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Alamat <span
+                    class="text-red-400">*</span></label>
+                <textarea id="registerAddress" rows="2" placeholder="Alamat lengkap"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">RT</label>
+                <input type="text" id="registerRT" placeholder="001"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">RW</label>
+                <input type="text" id="registerRW" placeholder="001"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Desa/Kelurahan</label>
+                <input type="text" id="registerVillage" placeholder="Desa/Kelurahan"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan/Kota/Kabupaten</label>
+                <input type="text" id="registerDistrict" placeholder="Kecamatan/Kota/Kabupaten"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi</label>
+                <input type="text" id="registerProvince" placeholder="Provinsi"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kode Pos</label>
+                <input type="text" id="registerPostalCode" placeholder="12345"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- Bagian 3: Lembaga & Akun -->
+          <div>
+            <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center">
+              <span class="w-7 h-7 gradient-bg rounded-lg flex items-center justify-center mr-2"><span
+                  class="text-xs">🔐</span></span>Lembaga & Akun
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Lembaga <span
+                    class="text-red-400">*</span></label>
+                <select id="registerBranch"
+                  class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="">-- Pilih Lembaga --</option>
+                  <option value="Manajemen Al Uswah Banyuwangi">Manajemen Al Uswah Banyuwangi</option>
+                  <option value="SMPIT Al Uswah Banyuwangi">SMPIT Al Uswah Banyuwangi</option>
+                  <option value="SDIT Al Uswah Banyuwangi">SDIT Al Uswah Banyuwangi</option>
+                  <option value="SDIT Al Uswah 2">SDIT Al Uswah 2 Banyuwangi</option>
+                  <option value="MATIQ Al Uswah">MATIQ Al Uswah Banyuwangi</option>
+                  <option value="TKIT Al Hafidz">TKIT Al Hafidz</option>
+                  <option value="TKIT PMB 2">TKIT PMB 2</option>
+                  <option value="TKIT PMB 3">TKIT PMB 3</option>
+                  <option value="TKIT Al Uswah 4">TKIT Al Uswah 4</option>
+                  <option value="TKIT Al Uswah 5">TKIT Al Uswah 5</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password <span
+                    class="text-red-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="registerPassword" placeholder="Minimal 6 karakter"
+                    oninput="checkPasswordStrength(this.value)"
+                    class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 pr-12 text-sm">
+                  <button type="button" onclick="toggleRegisterPasswordVisibility('registerPassword', 'eyeIconRegPass')"
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
+                    <svg id="eyeIconRegPass" class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+                      <path
+                        d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                    </svg>
+                  </button>
+                </div>
+                <div id="passwordStrength" class="mt-2 hidden">
+                  <div class="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div id="passwordStrengthBar" class="h-full rounded-full transition-all duration-300"
+                      style="width: 0%"></div>
+                  </div>
+                  <p id="passwordStrengthText" class="text-xs mt-1"></p>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password <span
+                    class="text-red-400">*</span></label>
+                <div class="relative">
+                  <input type="password" id="registerConfirmPassword" placeholder="Ulangi password"
+                    class="input-focus w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 pr-12 text-sm"
+                    onkeydown="if(event.key==='Enter') handleRegister()">
+                  <button type="button"
+                    onclick="toggleRegisterPasswordVisibility('registerConfirmPassword', 'eyeIconRegConfirm')"
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors">
+                    <svg id="eyeIconRegConfirm" class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24">
+                      <path
+                        d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="handleRegister()" id="registerBtn"
+            class="btn-hover w-full gradient-bg text-white font-semibold py-3 rounded-xl shadow-lg">Daftar</button>
+          <p id="registerError" class="text-red-500 text-sm text-center hidden"></p>
+          <p id="registerSuccess" class="text-green-500 text-sm text-center hidden"></p>
+        </div>
+        <div class="mt-6 p-4 bg-gray-50 rounded-xl text-center">
+          <p class="text-xs text-gray-500 mb-2">Sudah punya akun?</p>
+          <button onclick="showLoginFromRegister()"
+            class="text-sm font-semibold text-teal-600 hover:text-teal-800 transition-colors">← Masuk</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div id="dashboard" class="hidden min-h-full bg-gray-50">
+
+      <!-- Header -->
+      <header class="gradient-bg text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <h1 id="headerTitle" class="text-xl font-bold">Al Uswah Access</h1>
+                <p class="text-xs text-white/80">Dashboard <span id="roleDisplay">Admin</span></p>
+              </div>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg bg-white/20">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <!-- Desktop User Info -->
+            <div class="hidden md:flex items-center space-x-4">
+              <div class="text-right">
+                <div class="flex items-center justify-end gap-1">
+                  <p class="font-medium" id="userName">Administrator</p>
+                  <span id="warningBadge" class="hidden"></span>
+                </div>
+                <p class="text-xs text-white/80" id="userRoleText">Admin</p>
+              </div>
+              <button onclick="handleLogout()"
+                class="px-4 py-2 bg-white/20 rounded-xl hover:bg-white/30 transition-all">Keluar</button>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobileSidebarOverlay" class="fixed inset-0 bg-black/50 z-[60] hidden md:hidden"
+          onclick="toggleMobileMenu()"></div>
+        <!-- Mobile Sidebar -->
+        <div id="mobileMenu"
+          class="fixed top-0 left-0 h-full w-72 z-[70] gradient-bg shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden overflow-y-auto">
+          <div class="flex flex-col h-full">
+            <!-- Sidebar Header -->
+            <div class="p-5 border-b border-white/20">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <span class="text-white font-bold text-lg">Al Uswah</span>
+                </div>
+                <button onclick="toggleMobileMenu()"
+                  class="p-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div class="bg-white/10 rounded-xl p-3">
+                <p class="text-white font-medium text-sm" id="mobileSidebarUserName">User</p>
+                <p class="text-white/70 text-xs" id="mobileSidebarUserRole">Role</p>
+              </div>
+            </div>
+            <!-- Sidebar Navigation -->
+            <div class="flex-1 p-4 space-y-1 overflow-y-auto">
+              <p class="px-3 py-2 text-xs font-semibold text-white/50 uppercase">Menu Utama</p>
+              <button onclick="showPage('dashboard-home'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>🏠</span><span>Dashboard</span>
+              </button>
+              <button onclick="showPage('profile'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>👤</span><span>Profil</span>
+              </button>
+              <button onclick="showPage('data-pegawai'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>👥</span><span>Data Pegawai</span>
+              </button>
+              <button onclick="showPage('scan-attendance'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>📷</span><span>Scan Absensi</span>
+              </button>
+              <button onclick="showPage('attendance-log'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>📋</span><span>Log Absen</span>
+              </button>
+              <button onclick="showPage('perizinan'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>📨</span><span>Perizinan</span>
+              </button>
+              <button onclick="showPage('pelanggaran'); toggleMobileMenu()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>⚠️</span><span>Pelanggaran</span>
+              </button>
+              <button id="mobileRekapBtn" onclick="showPage('rekap-kehadiran'); toggleMobileMenu()"
+                class="hidden w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>📊</span><span>Rekap Kehadiran</span>
+              </button>
+              <button id="mobileManualBtn" onclick="showPage('manual-attendance'); toggleMobileMenu()"
+                class="hidden w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>📝</span><span>Absensi Manual</span>
+              </button>
+              <button id="mobileUsersBtn" onclick="showPage('manage-users'); toggleMobileMenu()"
+                class="hidden w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>👥</span><span>Kelola Pengguna</span>
+              </button>
+              <button id="mobileQRBtn" onclick="showPage('manage-qrcode'); toggleMobileMenu()"
+                class="hidden w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-white flex items-center space-x-3 transition-colors">
+                <span>📱</span><span>Kelola QR Code</span>
+              </button>
+              <div class="border-t border-white/20 my-2"></div>
+              <div id="mobileMenuItems"></div>
+            </div>
+            <!-- Sidebar Footer -->
+            <div class="p-4 border-t border-white/20">
+              <button onclick="handleLogout()"
+                class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/20 text-red-200 flex items-center space-x-3 transition-colors">
+                <span>🚪</span><span>Keluar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="flex">
+        <!-- Sidebar -->
+        <aside class="hidden md:block w-64 bg-white shadow-lg min-h-screen sticky top-20">
+          <nav class="p-4 space-y-2">
+            <button onclick="showPage('dashboard-home')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 active">
+              <span>🏠</span><span>Dashboard</span>
+            </button>
+            <button onclick="showPage('profile')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+              <span>👤</span><span>Profil</span>
+            </button>
+            <button onclick="showPage('data-pegawai')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+              <span>👥</span><span>Data Pegawai</span>
+            </button>
+            <button onclick="showPage('scan-attendance')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+              <span>📷</span><span>Scan Absensi</span>
+            </button>
+            <button onclick="showPage('attendance-log')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+              <span>📋</span><span>Log Absen</span>
+            </button>
+            <button onclick="showPage('perizinan')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+              <span>📨</span><span>Perizinan</span>
+            </button>
+            <button onclick="showPage('pelanggaran')"
+              class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+              <span>⚠️</span><span>Pelanggaran</span>
+            </button>
+            <div class="border-t border-gray-100 my-2"></div>
+            <div id="sidebarMenu"></div>
+            <div id="rekapMenu" class="hidden">
+              <button onclick="showPage('rekap-kehadiran')"
+                class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+                <span>📊</span><span>Rekap Kehadiran</span>
+              </button>
+              <button id="sidebarManualBtn" onclick="showPage('manual-attendance')"
+                class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+                <span>📝</span><span>Absensi Manual</span>
+              </button>
+            </div>
+            <div id="adminOnlyMenu" class="hidden">
+              <div class="border-t border-gray-100 my-4"></div>
+              <p class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Super Admin Tools</p>
+              <button onclick="showPage('manage-menu')"
+                class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+                <span>⚙️</span><span>Kelola Menu</span>
+              </button>
+              <button onclick="showPage('manage-users')"
+                class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+                <span>👥</span><span>Kelola Pengguna</span>
+              </button>
+              <button onclick="showPage('manage-qrcode')"
+                class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+                <span>📱</span><span>Kelola QR Code</span>
+              </button>
+            </div>
+            <div id="adminCabangMenu" class="hidden">
+              <div class="border-t border-gray-100 my-4"></div>
+              <p class="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Admin Lembaga</p>
+              <button onclick="showPage('manage-users')"
+                class="sidebar-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3">
+                <span>👥</span><span>Kelola Pengguna</span>
+              </button>
+            </div>
+          </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8">
+
+          <!-- Dashboard Home -->
+          <div id="page-dashboard-home" class="page-content page-transition">
+            <h2 id="welcomeText" class="text-2xl font-bold text-gray-800 mb-6">Assalamualaikum</h2>
+            <div id="dashboardCardsGrid" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+              <!-- Cards populated by JS based on role -->
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 class="font-semibold text-gray-800 mb-4">Panduan Singkat</h3>
+              <div class="space-y-3">
+                <div class="flex items-start space-x-3">
+                  <span
+                    class="w-6 h-6 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-bold">1</span>
+                  <p class="text-gray-600 text-sm">Klik menu yang berada di dashboard atau di sidebar untuk melihat
+                    data</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                  <span
+                    class="w-6 h-6 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-bold">2</span>
+                  <p class="text-gray-600 text-sm">Atau pilih menu di sidebar untuk akses lainnya</p>
+                </div>
+                <div class="flex items-start space-x-3">
+                  <span
+                    class="w-6 h-6 gradient-bg rounded-full flex items-center justify-center text-white text-xs font-bold">3</span>
+                  <p class="text-gray-600 text-sm">Anda akan diarahkan ke halaman yang sesuai</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile Page (rendered dynamically by JS) -->
+          <div id="page-profile" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Profil Pengguna</h2>
+            <div id="profileContent" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-2xl">
+              <!-- Content rendered by renderProfile() -->
+            </div>
+          </div>
+
+          <!-- Data Pegawai Page -->
+          <div id="page-data-pegawai" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Data Pegawai</h2>
+            <div id="dataPegawaiContent" class="space-y-6">
+              <!-- Dynamically rendered by renderDataPegawai() -->
+            </div>
+          </div>
+
+          <!-- Scan Attendance Page -->
+          <div id="page-scan-attendance" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Scan Absensi</h2>
+            <div class="max-w-xl mx-auto space-y-6">
+              <!-- Scan Type Selection -->
+              <div class="grid grid-cols-2 gap-4">
+                <button onclick="startScanner('in')" id="btnScanIn"
+                  class="btn-hover bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-xl shadow-lg flex flex-col items-center justify-center space-y-2 transition-colors">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span class="text-lg">Kedatangan</span>
+                  <span class="text-xs opacity-80">Scan untuk Absen Masuk</span>
+                </button>
+                <button onclick="startScanner('out')" id="btnScanOut"
+                  class="btn-hover bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-xl shadow-lg flex flex-col items-center justify-center space-y-2 transition-colors">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span class="text-lg">Kepulangan</span>
+                  <span class="text-xs opacity-80">Scan untuk Absen Pulang</span>
+                </button>
+              </div>
+              <!-- QR Scanner Area -->
+              <div id="scannerSection" class="hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
+                  <div class="flex items-center justify-between mb-4">
+                    <p id="scannerLabel" class="font-semibold text-gray-800">Scanning...</p>
+                    <button onclick="stopScanner()"
+                      class="px-4 py-2 bg-red-500 text-white rounded-xl text-sm hover:bg-red-600 transition-colors">✕
+                      Tutup</button>
+                  </div>
+                  <div id="locationStatus" class="mb-4 text-sm font-medium p-3 rounded-xl hidden"></div>
+                  <div id="qr-reader" class="rounded-2xl overflow-hidden"></div>
+                  <p class="text-sm text-gray-500 mt-4">Arahkan kamera ke QR Code lembaga</p>
+                </div>
+              </div>
+              <!-- Scan Result -->
+              <div id="scanResult" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+                <div id="scanResultContent"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attendance Log Page -->
+          <div id="page-attendance-log" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Riwayat Absensi</h2>
+            <div id="attendanceLogContent"
+              class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <!-- Dynamically rendered by renderAttendanceLogs() with filters -->
+            </div>
+          </div>
+
+          <!-- Dynamic Content Pages -->
+          <div id="page-submenu" class="page-content hidden page-transition">
+            <div class="mb-6">
+              <button onclick="goBack()" class="flex items-center text-gray-600 hover:text-teal-600 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg> Kembali
+              </button>
+            </div>
+            <h2 id="submenuTitle" class="text-2xl font-bold text-gray-800 mb-2"></h2>
+            <p id="submenuYear" class="text-gray-500 mb-6"></p>
+            <div id="monthGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+          </div>
+
+          <!-- Manage Menu Page (Admin Only) -->
+          <div id="page-manage-menu" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Kelola Menu</h2>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+              <h3 class="font-semibold text-gray-800 mb-4">Tambah Menu Baru</h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input type="text" id="newMenuName" placeholder="Nama Menu"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400">
+                <input type="text" id="newMenuIcon" placeholder="Emoji Icon (misal: 📚)"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400">
+                <button onclick="addMenu()"
+                  class="btn-hover gradient-bg text-white font-semibold py-3 rounded-xl">Tambah Menu</button>
+              </div>
+            </div>
+            <div id="menuList" class="space-y-4"></div>
+          </div>
+
+          <!-- Manage Users Page (Admin Only) -->
+          <div id="page-manage-users" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Kelola Pengguna</h2>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 mb-6">
+              <h3 class="font-semibold text-gray-800 mb-4">Tambah Pengguna Baru</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <input type="text" id="newUserName" placeholder="Nama Lengkap"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+                <input type="email" id="newUserEmail" placeholder="Email"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+                <input type="password" id="newUserPassword" placeholder="Password (min 6)"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+                <select id="newUserRole"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="guru">Guru</option>
+                  <option value="wali_kelas">Wali Kelas</option>
+                  <option value="admin_cabang">Admin Lembaga</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+                <select id="newUserBranch"
+                  class="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="">-- Lembaga --</option>
+                  <option value="Manajemen Al Uswah Banyuwangi">Manajemen Al Uswah Banyuwangi</option>
+                  <option value="SMPIT Al Uswah Banyuwangi">SMPIT Al Uswah Banyuwangi</option>
+                  <option value="SDIT Al Uswah Banyuwangi">SDIT Al Uswah Banyuwangi</option>
+                  <option value="SDIT Al Uswah 2">SDIT Al Uswah 2 Banyuwangi</option>
+                  <option value="MATIQ Al Uswah">MATIQ Al Uswah Banyuwangi</option>
+                  <option value="TKIT Al Hafidz">TKIT Al Hafidz</option>
+                  <option value="TKIT PMB 2">TKIT PMB 2</option>
+                  <option value="TKIT PMB 3">TKIT PMB 3</option>
+                  <option value="TKIT Al Uswah 4">TKIT Al Uswah 4</option>
+                  <option value="TKIT Al Uswah 5">TKIT Al Uswah 5</option>
+                </select>
+                <button onclick="addUser()" id="addUserBtn"
+                  class="btn-hover gradient-bg text-white font-semibold py-3 rounded-xl text-sm">Tambah</button>
+              </div>
+              <p id="addUserError" class="text-red-500 text-sm mt-2 hidden"></p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+              <div class="flex flex-col md:flex-row md:items-center gap-3">
+                <div class="relative flex-1">
+                  <input type="text" id="filterUserSearch" placeholder="Cari nama atau email..."
+                    oninput="renderUserList()"
+                    class="pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 w-full text-sm">
+                  <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                </div>
+                <select id="filterUserRole" onchange="renderUserList()"
+                  class="px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="">Semua Role</option>
+                  <option value="guru">Guru</option>
+                  <option value="wali_kelas">Wali Kelas</option>
+                  <option value="admin_cabang">Admin Lembaga</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+                <select id="filterUserBranch" onchange="renderUserList()"
+                  class="px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="">Semua Lembaga</option>
+                </select>
+                <select id="sortUser" onchange="renderUserList()"
+                  class="px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-teal-400 bg-white text-sm">
+                  <option value="name-asc">Nama A-Z</option>
+                  <option value="name-desc">Nama Z-A</option>
+                  <option value="role">Urutkan Role</option>
+                  <option value="branch">Urutkan Lembaga</option>
+                  <option value="newest">Terbaru</option>
+                  <option value="oldest">Terlama</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between mt-3">
+                <p id="userCountLabel" class="text-xs text-gray-500"></p>
+                <button onclick="resetUserFilters()"
+                  class="text-xs text-teal-600 hover:text-teal-800 font-medium transition-colors">Reset Filter</button>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Nama</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Email</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Role</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Lembaga</th>
+                      <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="userList"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rekap Kehadiran Page (Admin Only) -->
+          <div id="page-rekap-kehadiran" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Rekap Kehadiran</h2>
+            <div id="rekapContent" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <!-- Dynamically rendered by renderRekap() -->
+            </div>
+          </div>
+
+          <!-- Manage QR Code Page (Admin Only) -->
+          <div id="page-manage-qrcode" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Kelola QR Code</h2>
+            <div id="qrcodeContent" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <!-- Dynamically rendered by renderQRCodePage() -->
+            </div>
+          </div>
+
+          <!-- Manual Attendance Page (Admin Only) -->
+          <div id="page-manual-attendance" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Absensi Manual</h2>
+            <div id="manualAttendanceContent" class="space-y-6">
+              <!-- Dynamically rendered by renderManualAttendance() -->
+            </div>
+          </div>
+
+          <!-- Perizinan Page -->
+          <div id="page-perizinan" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Perizinan</h2>
+            <div id="perizinanContent" class="space-y-6">
+              <!-- Dynamically rendered by renderPerizinan() -->
+            </div>
+          </div>
+
+          <!-- Pelanggaran Page -->
+          <div id="page-pelanggaran" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Pelanggaran</h2>
+            <div id="pelanggaranContent" class="space-y-6">
+              <!-- Dynamically rendered by renderPelanggaran() -->
+            </div>
+          </div>
+
+          <!-- Slip Gaji Page -->
+          <div id="page-slip-gaji" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Slip Gaji</h2>
+            <div id="slipGajiContent" class="space-y-6"></div>
+          </div>
+
+          <!-- Arsip Administrasi Umum -->
+          <div id="page-arsip-admin-umum" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Arsip Administrasi Umum</h2>
+            <div id="arsipAdminUmumContent" class="space-y-6"></div>
+          </div>
+
+          <!-- Arsip Sarana & Prasarana -->
+          <div id="page-arsip-sarpras" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Arsip Sarana & Prasarana</h2>
+            <div id="arsipSarprasContent" class="space-y-6"></div>
+          </div>
+
+          <!-- Arsip Kegiatan & Dokumentasi -->
+          <div id="page-arsip-kegiatan" class="page-content hidden page-transition">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Arsip Kegiatan & Dokumentasi</h2>
+            <div id="arsipKegiatanContent" class="space-y-6"></div>
+          </div>
+
+        </main>
+      </div>
+
+      <!-- Footer -->
+      <footer class="bg-white border-t border-gray-100 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+          <p id="footerText" class="text-gray-500 text-sm">© 2026 Al Uswah Access</p>
+          <p class="text-gray-400 text-xs mt-1">Aplikasi Sistem Informasi Sekolah</p>
+        </div>
+      </footer>
+    </div>
+
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+  </div>
+
+  <script src="firebase-config.js"></script>
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // Initialize app after all scripts loaded
+    document.addEventListener('DOMContentLoaded', () => initApp());
+  </script>
+</body>
+
+</html>
