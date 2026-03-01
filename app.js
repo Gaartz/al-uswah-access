@@ -605,7 +605,7 @@ async function renderDataPegawai() {
   try {
     const allUsers = await DB.getAllUsers();
     // Exclude admin-level roles from pegawai list
-    const adminRoles = ['super_admin', 'admin_cabang', 'kepala_sekolah', 'manajer', 'direktur'];
+    const adminRoles = ['super_admin', 'admin_cabang'];
     const nonAdminUsers = allUsers.filter(u => !adminRoles.includes(u.role));
     // Filter by same branch as current user
     if (currentUser.branch) {
